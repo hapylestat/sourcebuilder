@@ -1,0 +1,37 @@
+#!/bin/bash
+#Based on guide: www.asterisk.com/sites/asterix/files/mce_files/documents/asterisk_quick_start_guide.pdf
+
+#================================[HEADER]====================================
+APPNAME=asterisk
+APPVER=11.7.0
+BASEURL=http://downloads.asterisk.org/pub/telephony/asterisk
+ARCHIVE=tar.gz
+#=============================================================================
+FILENAME=$APPNAME-$APPVER.$ARCHIVE
+
+mod_main(){
+ if [ ! -f $srvDOWNDIR/$FILENAME ]; then
+  run "wget $BASEURL/$FILENAME -O $srvDOWNDIR/$FILENAME" "Download source"
+ else
+  echo "Source downloading skipped as allready downloaded"
+ fi
+
+ switch_dir $srvDOWNDIR
+ run "tar -xf $srvDOWNDIR/$FILENAME" "Prepare source"
+ switch_dir
+
+ run "rm -rf $srvDIR/$APPNAME && rm -rf $srvBINDIR/$APPNAME-$APPVER" "Cleanup...."
+ run "mkdir $srvBINDIR/$APPNAME-$APPVER && ln -s $srvBINDIR/$APPNAME-$APPVER $srvDIR/$APPNAME" "Make links"
+
+
+ switch_dir $srvDOWNDIR/$APPNAME-$APPVER
+
+ run "./contrib/scripts/install_prereq install" "Install pre-requisites"
+ run "./configure --prefix=$srvDIR/$APPNAME --with-crypto --with-ssl --with-srtp" "Make configuration"
+
+
+ run "make" "Compile project"
+ run "make install" "Install project"
+ run "make samples" "Install samples"
+ switch_dir
+}

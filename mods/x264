@@ -1,0 +1,40 @@
+#!/bin/bash
+
+#============================
+APPNAME=x264
+APPVER="last"
+
+# ===check if x264 is installed
+x264 -V 1>/dev/null 2>/dev/null
+if [ $? -eq 0 ]; then
+ CURRVER=$APPVER
+else
+ CURRVER=0
+fi
+
+ARCHIVE=tar.bz2
+EXTERNAL_DEP="yasm-devel"
+#==========================
+
+
+mod_main(){
+ FILENAME=${APPVER}_${APPNAME}.${ARCHIVE}
+ if [ ! -f $srvDOWNDIR/$FILENAME ]; then
+ run "wget ftp://ftp.videolan.org/pub/x264/snapshots/$FILENAME -O $srvDOWNDIR/$FILENAME" "Download source"
+ else
+  echo "Source are exist..."
+ fi
+
+
+ switch_dir $srvDOWNDIR
+ run "mkdir -p ${APPNAME}-${APPVER} && tar -xf $srvDOWNDIR/$FILENAME -C ${APPNAME}-${APPVER} --strip-components 1" "Prepare source"
+ switch_dir
+
+ #build dependency
+ switch_dir $srvDOWNDIR/$APPNAME-$APPVER
+ run "./configure --prefix=/usr --libdir=/usr/lib64 --enable-shared" "Configure $APPNAME"
+ run "make" "Build $APPNAME"
+ run "make install" "Install dependency $APPNAME"
+ switch_dir
+}
+

@@ -1,0 +1,42 @@
+#!/bin/bash
+
+#================================[HEADER]====================================
+APPNAME=openssl
+APPVER=1.0.2m
+CURRVER=`openssl version|cut -d " " -f 2`
+BASEURL=https://www.openssl.org/source
+ARCHIVE=tar.gz
+#=============================================================================
+FILENAME=$APPNAME-$APPVER.$ARCHIVE
+
+mod_main(){
+ if [ ! -f $srvDOWNDIR/$FILENAME ]; then
+  run "wget $BASEURL/$FILENAME -O $srvDOWNDIR/$FILENAME" "Download source"
+ else
+  echo "Source downloading skipped as allready downloaded"
+ fi
+ 
+ switch_dir $srvDOWNDIR
+ run "tar -xf $srvDOWNDIR/$FILENAME" "Prepare source"
+ switch_dir
+
+ switch_dir $srvDOWNDIR/$APPNAME-$APPVER
+
+
+ #==========compiling section, ru here your build commands/scripts
+  #workaround for compilation openssl package(on rawhide with latest perl)
+ rm -f $srvDOWNDIR/$APPNAME-$APPVER/doc/apps/cms.pod
+ rm -f $srvDOWNDIR/$APPNAME-$APPVER/doc/apps/smime.pod
+ rm -f $srvDOWNDIR/$APPNAME-$APPVER/doc/crypto/X509_STORE_CTX_get_error.pod
+ rm -f $srvDOWNDIR/$APPNAME-$APPVER/doc/ssl/*.pod
+ echo "=pod" > $srvDOWNDIR/$APPNAME-$APPVER/doc/ssl/temp.pod
+ echo "=cut" >> $srvDOWNDIR/$APPNAME-$APPVER/doc/ssl/temp.pod
+ #======
+ #run "./config --prefix=/usr" "Make configuration"
+ run "./Configure linux-x86_64 -fPIC --prefix=/usr" "Tune configuration"
+ run "make depend" "Rebuild deps"
+
+ run "make" "Compile project"
+ run "make install" "Install project"
+ switch_dir
+}

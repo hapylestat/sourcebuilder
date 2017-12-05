@@ -1,0 +1,48 @@
+#!/bin/bash
+
+APPNAME=rtorrent
+APPVER=0.9.6
+DEPNAME1=libtorrent
+DEPVER1=0.13.6
+EXTERNAL_DEP="xmlrpc-c-devel"
+
+mod_main(){
+ if [ ! -f $srvDOWNDIR/$APPNAME-$APPVER.tar.gz ]; then
+  run "wget http://rtorrent.net/downloads/$APPNAME-$APPVER.tar.gz -O $srvDOWNDIR/$APPNAME-$APPVER.tar.gz" "Download source"
+ else
+  echo "Source are exist..."
+ fi
+
+ if [ ! -f $srvDOWNDIR/$DEPNAME1-$DEPVER1.tar.gz ]; then
+  run "wget http://rtorrent.net/downloads/$DEPNAME1-$DEPVER1.tar.gz -O $srvDOWNDIR/$DEPNAME1-$DEPVER1.tar.gz" "Download dependency source"
+ else
+  echo "Dependency are exists..."
+ fi
+
+
+ switch_dir $srvDOWNDIR
+ run "tar -xf $srvDOWNDIR/$APPNAME-$APPVER.tar.gz" "Prepare source"
+ run "tar -xf $srvDOWNDIR/$DEPNAME1-$DEPVER1.tar.gz" "Prepare dependency source"
+ switch_dir
+
+
+ run "rm -rf $srvDIR/$APPNAME && rm -rf $srvBINDIR/$APPNAME-$APPVER" "Cleanup...."
+ run "mkdir $srvBINDIR/$APPNAME-$APPVER && ln -s $srvBINDIR/$APPNAME-$APPVER $srvDIR/$APPNAME" "Make links"
+
+
+ switch_dir $srvDOWNDIR/$DEPNAME1-$DEPVER1
+ run "./configure --prefix=$srvDIR/$APPNAME" "Configure dependency"
+ run "make" "Conpile dependency"
+ run "make install" "Install dependency"
+ switch_dir
+ 
+ export libtorrent_LIBS=$srvDIR/$APPNAME
+ export libtorrent_CFLAGS=-I$srvDIR/$APPNAME/include
+
+ switch_dir $srvDOWNDIR/$APPNAME-$APPVER
+ run "./configure --prefix=$srvDIR/$APPNAME --with-xmlrpc-c=$srvDIR/$APPNAME/bin/xmlrpc-c-config" #PKG_CONFIG_PATH=$srvDIR/$APPNAME/lib/pkgconfig CPPFLAGS='-I$srvDIR/$APPNAME/include/torrent'"  "Configure project"
+ run "make" "Compile project"
+ run "make install" "Install project"
+ switch_dir
+}
+

@@ -1,0 +1,32 @@
+#!/bin/bash
+
+#============================
+APPNAME=ffmpeg
+APPVER=3.2.2
+ARCHIVE=tar.bz2
+EXTERNAL_DEP="yasm-devel libvpx-devel libvorbis-devel"
+INTERNAL_DEP="x264 lame"
+#==========================
+
+
+mod_main(){
+ FILENAME=$APPNAME-$APPVER.$ARCHIVE
+ if [ ! -f $srvDOWNDIR/$FILENAME ]; then
+ run "wget http://ffmpeg.org/releases/$FILENAME -O $srvDOWNDIR/$FILENAME" "Download dependency source"
+ else
+  echo "Source are exist..."
+ fi
+
+
+ switch_dir $srvDOWNDIR
+ run "tar -xf $srvDOWNDIR/$FILENAME" "Prepare source"
+ switch_dir
+
+ #build dependency
+ switch_dir $srvDOWNDIR/$APPNAME-$APPVER
+ run "./configure --prefix=/usr --libdir=/usr/lib64 --enable-shared --enable-libvpx --enable-libvorbis --enable-libx264 --enable-gpl --enable-version3 --enable-nonfree --enable-libmp3lame" "Configure $APPNAME"
+ run "make" "Build $APPNAME"
+ run "make install" "Install dependency $APPNAME"
+ switch_dir
+}
+

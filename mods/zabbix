@@ -1,0 +1,85 @@
+#!/bin/bash
+
+APPNAME=zabbix
+APPVER=2.0.8
+
+#application mode (server/client)
+MODE="server"
+
+#mysql/sqlite
+DATABASE="mysql"
+
+#CHANNEL: Stable/Development
+CHANNEL="Stable"
+#==[option builder]=============================================
+mod_main(){
+  if [ ! -z ${ARGS["mode"]} ];then
+    MODE=${ARGS["mode"]}
+  else
+   write_error "$FILENAME $APPNAME --mode [client|server]"
+   exit 1
+  fi
+
+
+ case "$DATABASE" in
+   mysql)
+     DATABASE="--with-mysql=$srvDIR/mysql/bin/mysql_config"
+     ;;
+   sqlite)
+    DATABASE="--with-sqlite3"
+    ;;  
+ esac
+
+ if [ "$MODE" == "server" ]; then
+  OPTIONS="--enable-server --enable-agent $DATABASE"
+ else
+  OPTIONS="--enable-agent"
+ fi
+#===============================================================
+
+
+
+ if [ ! -f $srvDOWNDIR/$APPNAME-$APPVER.tar.gz ]; then
+  run "wget \"http://heanet.dl.sourceforge.net/project/$APPNAME/ZABBIX Latest $CHANNEL/$APPVER/$APPNAME-$APPVER.tar.gz\" -O $srvDOWNDIR/$APPNAME-$APPVER.tar.gz" "Download source"
+ else
+  echo "Source downloading skipped as allready downloaded"
+ fi
+
+ switch_dir $srvDOWNDIR
+ run "tar -xf $srvDOWNDIR/$APPNAME-$APPVER.tar.gz" "Prepare source"
+ switch_dir
+
+ run "rm -rf $srvDIR/$APPNAME && rm -rf $srvBINDIR/$APPNAME-$APPVER" "Cleanup...."
+ run "mkdir $srvBINDIR/$APPNAME-$APPVER && ln -s $srvBINDIR/$APPNAME-$APPVER $srvDIR/$APPNAME" "Make links"
+
+
+ switch_dir $srvDOWNDIR/$APPNAME-$APPVER
+
+ run "./configure --prefix=$srvDIR/$APPNAME --sysconfdir=$srvCONFDIR/$APPNAME --enable-ipv6 ${OPTIONS}" "Make configuration"
+
+
+ run "make" "Compile project"
+ run "make install" "Install project"
+ switch_dir
+
+ #thin configuration
+ adduser -M -s /sbin/nologin $APPNAME 1>/dev/null 2>&1
+
+
+
+
+ #server part
+ #============
+ if [ "$MODE" == "server" ];then
+  service_install "$APPNAME-server" "$srvDIR/$APPNAME/sbin/${APPNAME}_server -c $srvCONFDIR/$APPNAME/${APPNAME}_server.conf" "oneshot"
+  touch $srvLOGDIR/${APPNAME}_server.log
+   chown $APPNAME:$APPNAME $srvLOGDIR/${APPNAME}_server.log
+  #sed -i -e "s/LogFile=\/tmp/LogFile=\/var\/log/g" $srvCONFDIR/$APPNAME/${APPNAME}_server.conf
+ fi
+
+ #client part
+ #===========
+ service_install "$APPNAME-agentd" "$srvDIR/$APPNAME/sbin/${APPNAME}_agentd -c $srvCONFDIR/$APPNAME/${APPNAME}_agentd.conf" "oneshot"
+ touch $srvLOGDIR/${APPNAME}_agentd.log
+ chown $APPNAME:$APPNAME $srvLOGDIR/${APPNAME}_agentd.log
+}

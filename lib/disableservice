@@ -1,0 +1,14 @@
+#!/bin/bash
+######################################
+#            Shell script            #
+# Author: H.L.                       #
+# TPL Version: 0.1                   #
+######################################
+
+service_install(){
+ echo "Service installing skipped"
+}
+
+
+
+

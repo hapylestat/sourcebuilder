@@ -1,0 +1,62 @@
+#!/bin/bash
+
+APPNAME=bind
+APPVER=9.10.3-P4
+DOWNVER=`echo $APPVER |sed 's/\./-/g'`
+CONFDIR=$srvCONFDIR/$APPNAME
+
+EXTERNAL_DEP="GeoIP-devel libxml2-devel json-devel json-c-devel db4-devel libdb-devel"
+INTERNAL_DEP="openssl"
+
+
+mod_main(){
+ if [ ! -f $srvDOWNDIR/$APPNAME-$APPVER.tar.gz ]; then
+  run "wget https://www.isc.org/downloads/file/$APPNAME-$DOWNVER/?version=tar-gz -O $srvDOWNDIR/$APPNAME-$APPVER.tar.gz" "Download source"
+ else
+  echo "Source are exist..."
+ fi
+
+
+ switch_dir $srvDOWNDIR
+ run "tar -xf $srvDOWNDIR/$APPNAME-$APPVER.tar.gz" "Prepare source"
+ switch_dir
+
+ run "rm -rf $srvDIR/$APPNAME && rm -rf $srvBINDIR/$APPNAME-$APPVER" "Cleanup...."
+ run "mkdir $srvBINDIR/$APPNAME-$APPVER && ln -s $srvBINDIR/$APPNAME-$APPVER $srvDIR/$APPNAME" "Make links"
+ 
+ if [ ! -d $CONFDIR ]; then
+   run "mkdir ${CONFDIR}" "Create empty config directory \"$CONFDIR\""
+ fi
+ 
+
+ ARGS="./configure --prefix=$srvDIR/$APPNAME --datarootdir=$CONFDIR --disable-dependency-tracking --sysconfdir=$CONFDIR --datadir=$CONFDIR/data"
+ ARGS="$ARGS --with-python --with-libtool --localstatedir=/var --enable-threads --enable-ipv6 --enable-filter-aaaa --with-pic --disable-static"
+ ARGS="$ARGS --disable-openssl-version-check --with-tuning=large --with-geoip --with-dlopen=yes"
+ ARGS="$ARGS --with-dlz-filesystem=yes --with-dlz-bdb=yes  --disable-isc-spnego"
+ ARGS="$ARGS --enable-fixed-rrset --with-docbook-xsl --enable-full-report"
+ #ARGS="$ARGS --enable-native-pkcs11 --with-pkcs11 "
+ #ARGS="$ARGS --with-gssapi=yes"
+ #ARGS="$ARGS --with-dlz-ldap=yes"
+ #ARGS="$ARGS --with-dlz-postgres=yes"
+ #ARGS="$ARGS --with-dlz-mysql=yes"
+ 
+ 
+ #build main app
+ switch_dir $srvDOWNDIR/$APPNAME-$APPVER
+ run "$ARGS" "Configure application"
+ run "make" "Compile project"
+ run "make install" "Install project"
+ switch_dir
+ 
+ if [ -d "$srvDIR/$APPNAME" ]; then
+   rm -rf $srvDIR/$APPNAME/etc
+   ln -s ${CONFDIR} $srvDIR/$APPNAME/etc
+ fi 
+ 
+ 
+ run "adduser named -M --shell /sbin/nologin -d /tmp" "!Create user"
+ run "mkdir /run/named && chown -R named:named /run/named" "!Create pid dirs"
+ run "mkdir /var/named && mkdir /var/named/data && mkdir /var/named/dynamic && chown -R named:named /var/named" "!Create data dirs"
+ #echo -e "${COLOR_VALUE}Install $APPANAME service....${COLOR_END}"
+ #service_install "$APPNAME" "$srvDIR/$APPNAME/sbin/$APPNAME" "forking"
+}

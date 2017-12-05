@@ -1,0 +1,34 @@
+#!/bin/bash
+
+#============================
+APPNAME=lame
+APPVER=3.99.5
+
+# ===check if x264 is installed
+CURRVER=`lame -?|head -1|awk '{print $4}'`
+
+ARCHIVE=tar.gz
+EXTERNAL_DEP=""
+#==========================
+
+
+mod_main(){
+ FILENAME=${APPNAME}-${APPVER}.${ARCHIVE}
+ if [ ! -f $srvDOWNDIR/$FILENAME ]; then
+ run "wget https://sourceforge.net/projects/$APPNAME/files/$APPNAME/3.99/$FILENAME/download -O $srvDOWNDIR/$FILENAME" "Download source"
+ else
+  echo "Source are exist..."
+ fi
+
+
+ switch_dir $srvDOWNDIR
+ run "mkdir -p ${APPNAME}-${APPVER} && tar -xf $srvDOWNDIR/$FILENAME -C ${APPNAME}-${APPVER} --strip-components 1" "Prepare source"
+ switch_dir
+
+ #build dependency
+ switch_dir $srvDOWNDIR/$APPNAME-$APPVER
+ run "./configure --prefix=/usr --libdir=/usr/lib64 --enable-shared" "Configure $APPNAME"
+ run "make" "Build $APPNAME"
+ run "make install" "Install dependency $APPNAME"
+ switch_dir
+}

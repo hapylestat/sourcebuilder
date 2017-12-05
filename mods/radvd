@@ -1,0 +1,46 @@
+#!/bin/bash
+
+APPNAME=radvd
+APPVER=2.15
+DOWNVER=$APPVER
+CONFDIR=$srvCONFDIR/$APPNAME
+
+EXTERNAL_DEP="byacc flex"
+INTERNAL_DEP=""
+
+
+mod_main(){
+ if [ ! -f $srvDOWNDIR/$APPNAME-$APPVER.tar.gz ]; then
+  run "wget http://www.litech.org/radvd/dist/$APPNAME-$DOWNVER.tar.gz -O $srvDOWNDIR/$APPNAME-$APPVER.tar.gz" "Download source"
+ else
+  echo "Source are exist..."
+ fi
+
+
+ switch_dir $srvDOWNDIR
+ run "tar -xf $srvDOWNDIR/$APPNAME-$APPVER.tar.gz" "Prepare source"
+ switch_dir
+
+ run "rm -rf $srvDIR/$APPNAME && rm -rf $srvBINDIR/$APPNAME-$APPVER" "Cleanup...."
+ run "mkdir $srvBINDIR/$APPNAME-$APPVER && ln -s $srvBINDIR/$APPNAME-$APPVER $srvDIR/$APPNAME" "Make links"
+ 
+ if [ ! -d $CONFDIR ]; then
+   run "mkdir ${CONFDIR}" "Create empty config directory \"$CONFDIR\""
+ fi
+
+ #build main app
+ switch_dir $srvDOWNDIR/$APPNAME-$APPVER
+ run "./configure --prefix=$srvDIR/$APPNAME --sysconfdir=$CONFDIR --with-logfile=/var/log/$APPNAME.log --with-pidfile=/var/run/$APPNAME.pid --with-configfile=$CONFDIR/$APPNAME.conf" "Configure application"
+ run "make" "Compile project"
+ run "make install" "Install project"
+ switch_dir
+ 
+ if [ -d "$srvDIR/$APPNAME" ]; then
+   rm -rf $srvDIR/$APPNAME/etc
+   ln -s ${CONFDIR} $srvDIR/$APPNAME/etc
+ fi 
+ 
+ 
+ #echo -e "${COLOR_VALUE}Install $APPANAME service....${COLOR_END}"
+ #service_install "$APPNAME" "$srvDIR/$APPNAME/sbin/$APPNAME" "forking"
+}

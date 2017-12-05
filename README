@@ -1,0 +1,9 @@
+Available script variables
+==========================
+
+APPNAME [required] - name of the application
+APPVER [required] - version of the application
+CURRVER [optional] - current present version of the application, allow to skip build of the same version
+
+EXTERNAL_DEP [optional] - install packages using dnf
+INTERNAL_DEP [optional] - install packages using build.sh tool
