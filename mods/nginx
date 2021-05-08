@@ -1,11 +1,11 @@
 #!/bin/bash
 
 APPNAME=nginx
-APPVER=1.13.6
+APPVER=1.19.7
 DEPNAME1=openssl
-DEPVER1=1.0.2h
+DEPVER1=1.1.1j
 FAKENAME=kira
-FAKEVER=0.4
+FAKEVER=0.6
 EXTERNAL_DEP="pcre-devel"
 COMPILE_ARGS="
 --with-http_ssl_module

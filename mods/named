@@ -1,24 +1,23 @@
 #!/bin/bash
 
 APPNAME=bind
-APPVER=9.10.3-P4
+APPVER=9.17.10
 DOWNVER=`echo $APPVER |sed 's/\./-/g'`
 CONFDIR=$srvCONFDIR/$APPNAME
 
-EXTERNAL_DEP="GeoIP-devel libxml2-devel json-devel json-c-devel db4-devel libdb-devel"
+EXTERNAL_DEP="GeoIP-devel libxml2-devel json-devel json-c-devel db4-devel libdb-devel libcap-devel libtool libuv-devel libnghttp2-devel"
 INTERNAL_DEP="openssl"
-
 
 mod_main(){
  if [ ! -f $srvDOWNDIR/$APPNAME-$APPVER.tar.gz ]; then
-  run "wget https://www.isc.org/downloads/file/$APPNAME-$DOWNVER/?version=tar-gz -O $srvDOWNDIR/$APPNAME-$APPVER.tar.gz" "Download source"
+  run "curl -L https://downloads.isc.org/isc/bind9/$APPVER/$APPNAME-$APPVER.tar.xz -o $srvDOWNDIR/$APPNAME-$APPVER.tar.xz" "Download source"
  else
   echo "Source are exist..."
  fi
 
 
  switch_dir $srvDOWNDIR
- run "tar -xf $srvDOWNDIR/$APPNAME-$APPVER.tar.gz" "Prepare source"
+ run "tar -xf $srvDOWNDIR/$APPNAME-$APPVER.tar.xz" "Prepare source"
  switch_dir
 
  run "rm -rf $srvDIR/$APPNAME && rm -rf $srvBINDIR/$APPNAME-$APPVER" "Cleanup...."
@@ -28,7 +27,7 @@ mod_main(){
    run "mkdir ${CONFDIR}" "Create empty config directory \"$CONFDIR\""
  fi
  
-
+ export LDFLAGS=-ldl
  ARGS="./configure --prefix=$srvDIR/$APPNAME --datarootdir=$CONFDIR --disable-dependency-tracking --sysconfdir=$CONFDIR --datadir=$CONFDIR/data"
  ARGS="$ARGS --with-python --with-libtool --localstatedir=/var --enable-threads --enable-ipv6 --enable-filter-aaaa --with-pic --disable-static"
  ARGS="$ARGS --disable-openssl-version-check --with-tuning=large --with-geoip --with-dlopen=yes"

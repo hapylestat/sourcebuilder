@@ -2,7 +2,7 @@
 
 #================================[HEADER]====================================
 APPNAME=openssl
-APPVER=1.0.2m
+APPVER=1.1.1g  #1.0.2t
 CURRVER=`openssl version|cut -d " " -f 2`
 BASEURL=https://www.openssl.org/source
 ARCHIVE=tar.gz
@@ -32,8 +32,8 @@ mod_main(){
  echo "=pod" > $srvDOWNDIR/$APPNAME-$APPVER/doc/ssl/temp.pod
  echo "=cut" >> $srvDOWNDIR/$APPNAME-$APPVER/doc/ssl/temp.pod
  #======
- #run "./config --prefix=/usr" "Make configuration"
- run "./Configure linux-x86_64 -fPIC --prefix=/usr" "Tune configuration"
+ run "./config --prefix=/usr" "Make configuration"
+       #run "./Configure linux-x86_64 -fPIC --prefix=/usr" "Tune configuration"
  run "make depend" "Rebuild deps"
 
  run "make" "Compile project"
